@@ -1,0 +1,23 @@
+[global]
+name=fiotest
+ioengine=libaio
+direct=1
+iodepth={{ io_depth }}
+group_reporting
+runtime=300
+startdelay=0
+loops=100
+
+[random-rw-test1]
+rw=randread
+bs={{ block_size }}
+size={{ file_size }}
+numjobs={{ numjobs }}
+filename={{ dest_folder }}/{{ file_name }}.1
+
+[random-wr-test2]
+rw=randwrite
+bs={{ block_size }}
+size={{ file_size }}
+numjobs={{ numjobs }}
+filename= {{ dest_folder }}/{{ file_name }}.2

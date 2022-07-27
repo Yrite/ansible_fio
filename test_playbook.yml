@@ -1,0 +1,79 @@
+---
+- hosts: fio
+  name: play for configure fio disk 
+  remote_user: administrator
+  become: yes
+  gather_facts: True
+  become_method: sudo
+  order: sorted
+  vars_files:
+    - vars/vars.yml
+  tasks:
+  - name: ping my hosts
+    ansible.builtin.ping:
+    remote_user: administrator
+
+  - name: Create fio directory
+    ansible.builtin.file:
+      path: "{{ dest_folder }}"
+      state: directory
+
+  - name: Create a new ext4 primary partition 
+    community.general.parted:
+      device: "{{ device_name }}" 
+      number: 1
+      state: present 
+      fs_type: ext4
+    ignore_errors: yes
+
+  - name: create file system 
+    community.general.filesystem:
+      fstype: ext4
+      dev: "{{ device_name }}" 
+
+  - name: mount fs 
+    ansible.posix.mount:
+      fstype: ext4
+      src: "{{ device_name }}" 
+      path: "{{ dest_folder }}"
+      state: mounted
+  tags: 
+    - prepare_vm
+    - all
+
+- hosts: fio
+  name: play for configure fio 
+  remote_user: administrator
+  become: yes
+  gather_facts: True
+  become_method: sudo
+  order: sorted
+  vars_files:
+    - vars/vars.yml
+  tasks:
+  - name: install fio on host
+    ansible.builtin.apt: 
+      name: fio
+      state: present
+      update_cache: yes
+    when: ansible_facts['os_family'] == "Debian"
+
+  - name: genereate job file from j2 template 
+    template:
+      src: "{{ source_folder }}" 
+      dest: "{{ dest_folder }}/job_{{ file_name }}.fio"
+      owner: root 
+      mode: "664"
+
+  - name: run fio job
+    ansible.builtin.shell: fio job_"{{ file_name }}".fio
+    args:
+      chdir: "{{ dest_folder }}" 
+
+  - name: remove test files and job template after fio job complets
+    ansible.builtin.shell: rm -f {{ file_name }}.* job_"{{ file_name }}".fio
+    args:
+      chdir: "{{ dest_folder }}"
+  tags:
+    - run_fio
+    - all 

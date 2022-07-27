@@ -1,0 +1,13 @@
+# folders 
+source_folder: ./templates/job.j2 
+dest_folder: /fio/
+# FIO Pattern vars 
+block_size: 128K
+io_depth: 64
+runtime: 3600
+numjobs: 16
+job_pattern: random_rw 
+file_name: rndrw
+file_size: 124GB
+device_name: /dev/sdb
+# other vars
